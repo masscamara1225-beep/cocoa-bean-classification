@@ -1,0 +1,9 @@
+Groupe,Nb caractéristiques,Baisse du F1 (points),Écart-type
+Toute la couleur,135,54.4,1.5
+Toute la texture,42,22.4,0.9
+Couleur LAB,45,13.2,0.9
+Couleur HSV,45,12.9,0.8
+Couleur RGB,45,11.7,0.6
+Texture Gabor,24,10.6,0.6
+Texture GLCM,8,7.7,0.4
+Texture LBP,10,1.8,0.5
