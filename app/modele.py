@@ -51,9 +51,9 @@ class CoucheANFIS(layers.Layer):
 
 # Description des catégories et des règles floues (résultats de l'étape 8)
 CATEGORIES = {
-    0: {"nom": "Catégorie 1", "description": "fève brun-rouge, aux caractéristiques intermédiaires", "couleur": "#8B4513"},
-    1: {"nom": "Catégorie 2", "description": "fève sombre et violacée, à surface contrastée", "couleur": "#3E2723"},
-    2: {"nom": "Catégorie 3", "description": "fève claire et orangée, à surface lisse", "couleur": "#D2A679"},
+    0: {"nom": "Catégorie 1", "court": "brun-rouge", "description": "fève brun-rouge, aux caractéristiques intermédiaires", "couleur": "#8B4513"},
+    1: {"nom": "Catégorie 2", "court": "sombre et violacée", "description": "fève sombre et violacée, à surface contrastée", "couleur": "#3E2723"},
+    2: {"nom": "Catégorie 3", "court": "claire", "description": "fève claire et orangée, à surface lisse", "couleur": "#D2A679"},
 }
 REGLES = {
     9: "SI la fève est claire, orangée, peu saturée et à surface lisse, ALORS catégorie 3.",
@@ -102,11 +102,30 @@ def analyser(tableau, modele_gradcam, modele_flou, modele):
     return proba[0].numpy(), classe, cam, regle, float(forces.max())
 
 
+def espaces_couleur(tableau):
+    """Les 9 canaux de la fève (60 x 60) dans RGB, HSV (teinte tournée, comme à l'étape 3) et LAB."""
+    import cv2
+    rgb = tableau.astype("uint8")
+    hsv = cv2.cvtColor(rgb, cv2.COLOR_RGB2HSV)
+    hsv[..., 0] = (hsv[..., 0].astype(int) + 90) % 180
+    lab = cv2.cvtColor(rgb, cv2.COLOR_RGB2LAB)
+    return {
+        "RGB": (rgb, ["R (rouge)", "G (vert)", "B (bleu)"]),
+        "HSV": (hsv, ["H (teinte)", "S (saturation)", "V (valeur)"]),
+        "LAB": (lab, ["L* (luminosité)", "a* (vert-rouge)", "b* (bleu-jaune)"]),
+    }
+
+
+def predire_lot(tableaux, modele):
+    """Probabilités pour plusieurs fèves d'un coup."""
+    return modele.predict(np.stack(tableaux), verbose=0)
+
+
 def superposer_gradcam(image_carree, cam, taille=480):
     """Superpose la carte Grad-CAM (teintes chaudes, transparente là où l'attention est faible)."""
     fond = image_carree.resize((taille, taille), Image.LANCZOS).convert("RGBA")
     cam_grande = np.asarray(Image.fromarray((cam * 255).astype("uint8")).resize((taille, taille), Image.BICUBIC)) / 255
     couleurs = colormaps["YlOrBr"](cam_grande)
-    couleurs[..., 3] = np.clip(cam_grande, 0, 1) * 0.8          # transparence proportionnelle à l'attention
+    couleurs[..., 3] = np.clip(cam_grande, 0, 1) * 0.75          # transparence proportionnelle à l'attention
     calque = Image.fromarray((couleurs * 255).astype("uint8"), mode="RGBA")
     return Image.alpha_composite(fond, calque).convert("RGB")
