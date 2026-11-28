@@ -20,7 +20,7 @@ st.set_page_config(page_title="Analyse de fèves de cacao", page_icon="🫘", la
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700&display=swap');
-:root { --surface: #F5F4F1; --trait: #E7E4DE; --texte: #2E2A27; --gris: #77706A; --feuille: #4F7A55;
+:root { --surface: #F5F4F1; --trait: #E7E4DE; --texte: #2E2A27; --gris: #5C5550; --feuille: #4F7A55;
         --cacao: #8B4513; --encre: #3E2723; --feve-claire: #D2A679; }
 .stApp .stMarkdown, .stApp .stMarkdown p, .stApp .stMarkdown div, .stApp .stMarkdown span,
 .stApp label, .stApp [data-testid="stCaptionContainer"], .stApp button p {
@@ -51,18 +51,21 @@ st.markdown("""
 .regle { padding: 0.9rem 1.1rem; background: var(--surface); border-radius: 10px; line-height: 1.5; }
 .stApp .regle-titre { font-weight: 600; margin-bottom: 0.2rem; }
 .stApp .stMarkdown .alerte { margin-top: 0.8rem; font-size: 0.92rem; color: #9A4A12; }
-.stApp .stMarkdown .vide { padding: 1.6rem 1.8rem; background: var(--surface); border-radius: 12px; line-height: 1.7; }
-.stApp .stMarkdown .vide-titre { font-weight: 600; font-size: 1.1rem; margin-bottom: 0.3rem; }
-.stApp .stMarkdown .vide ol { margin: 0; padding-left: 1.2rem; color: var(--gris); }
-
+.stApp .stMarkdown .vide { padding: 1.6rem 1.8rem; background: var(--surface); border-radius: 12px; line-height: 1.8; }
+.stApp .stMarkdown .vide-titre { font-weight: 600; font-size: 1.1rem; margin-bottom: 0.4rem; }
+.stApp .stMarkdown .vide ol { margin: 0; padding-left: 1.4rem; color: var(--texte); }
+.stApp .stMarkdown .vide ol li::marker { color: var(--cacao); font-weight: 700; }
 .repartition { display: flex; height: 34px; border-radius: 8px; overflow: hidden; margin: 0.6rem 0 0.8rem 0; }
 .repartition div { display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 600; }
 
-.stApp .stMarkdown .pied { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--trait); font-size: 0.82rem; color: var(--gris); line-height: 1.6; }
+.stApp .stMarkdown .pied { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--trait); font-size: 0.95rem; color: var(--gris); line-height: 1.7; }
 
 [data-testid="stFileUploaderDropzone"] { background: var(--surface); border: 1.5px dashed #CFCAC2; border-radius: 12px; }
 .stButton > button, .stDownloadButton > button { border-radius: 999px; }
 [data-testid="stImage"] img { border-radius: 12px; }
+
+.nuancier-legende { font-size: 0.9rem !important; }
+.stApp [data-testid="stCaptionContainer"] p { font-size: 0.95rem; color: var(--gris); }
 </style>
 """, unsafe_allow_html=True)
 
@@ -119,8 +122,8 @@ def message_vide(titre, etapes):
 
 # ---------- En-tête ----------
 st.markdown('<div class="titre">Analyse de fèves de cacao</div>', unsafe_allow_html=True)
-st.markdown('<div class="sous-titre">Classification en trois catégories à partir de photos de fèves.</div>',
-            unsafe_allow_html=True)
+st.markdown('<div class="sous-titre">Classification en trois catégories à partir de photos de fèves '
+            '(les graines de cacao, extraites de la cabosse).</div>', unsafe_allow_html=True)
 
 saisie, resultats_zone = st.columns([1.15, 2], gap="large")
 
@@ -239,11 +242,11 @@ with resultats_zone:
             synthese = pd.DataFrame([{
                 "Catégorie": etiquette(k),
                 "Nombre de fèves": int((classes_predites == k).sum()),
-                "Part du lot (%)": round((classes_predites == k).mean() * 100, 1),
+                "Part du lot (%)": f"{(classes_predites == k).mean() * 100:.1f}",
                 "Confiance moyenne (%)": f"{confiances[classes_predites == k].mean() * 100:.1f}"
                                          if (classes_predites == k).any() else "—",
             } for k in ORDRE])
-            st.dataframe(synthese, hide_index=True, width="stretch")
+            st.table(synthese.set_index("Catégorie"))
 
             incertaines = [i for i in range(n) if confiances[i] < SEUIL_INCERTITUDE]
             if incertaines:
